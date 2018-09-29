@@ -2,10 +2,10 @@ var inicio=0;
 var puntos = 0;
 var segundos = 0;
 var minutos = 0;
-var eliminar = 0;
+var quitarDulces = 0;
 var nuevosDulces = 0;
 var intervalo = 0;
-var tiempo = 0;
+var cronometro = 0;
 var nuemro = 0;
 var imagen = 0;
 var coordenada = 0;
@@ -23,7 +23,8 @@ $(function(){
 	//Accion de clic en boton inicio
 	$('.btn-reinicio').click(function(){
 		if (reinicio == 0) {
-			puntos =0;
+			inicio = 0;
+			puntos = 0;
 			movimientos = 0;
 			$(".panel-score").css("width","25%");
 			$(".panel-tablero").show();
@@ -31,18 +32,18 @@ $(function(){
 			$("#score-text").html("0");
 			$("#movimientos-text").html("0");
 			$(this).html("Reiniciar");
-			clearInterval(eliminar);
+			clearInterval(quitarDulces);
 			clearInterval(nuevosDulces);
-			clearInterval(tiempo);
+			clearInterval(cronometro);
 			clearInterval(intervalo);
 			minutos = 2;
 			segundos = 0;
 			borrartotal();
-			intervalo=setInterval(function(){
-				iniciar()
-			},600);
+			//setInteval ejecución de funcion iterativamente, hasta llamado de clearInterval
 
-			//setInteval retarda ejecución de funcion por el tiempo definido
+			intervalo = setInterval(function(){
+				iniciar()
+			},300);
 			cronometro = setInterval(function(){
 				timer()
 			},1000);
@@ -78,14 +79,17 @@ function timer(){
 		if(minutos == 0){
 			$(".panel-tablero").hide("drop","slow",MovPuntos);
 			$(".time").hide();
-			clearInterval(eliminar);
+			clearInterval(quitarDulces);
 			clearInterval(nuevosDulces);
 			clearInterval(intervalo);
-			clearInterval(tiempo);
+			clearInterval(cronometro);
 		}
 		segundos = 59;
 		minutos = minutos - 1;
 	}
+	if (segundos == 9 || segundos == 8 || segundos == 7 || segundos == 6 || segundos == 5 || segundos == 4 || segundos == 3 || segundos == 2 || segundos == 1 || segundos == 0) {
+		$("#timer").html("0"+minutos+":0"+segundos);
+	}else
 	$("#timer").html("0"+minutos+":"+segundos);
 };
 
@@ -96,7 +100,7 @@ function MovPuntos(){
 
 //Comenzar llenado de tablero
 function iniciar(){
-	inicio = inicio +1;
+	inicio++;
 	var numero=0;
 	var imagen=0;
 	$(".elemento").draggable({disabled:true});
@@ -108,12 +112,13 @@ function iniciar(){
 				$(".col-"+f).prepend("<img src="+imagen+" class='elemento' />").css("justify-content","flex-start")
 			}
 		}
+
 	}
 	if (inicio == 7){
 		clearInterval(intervalo);
-		quitar = setInterval(function(){
+		quitarDulces = setInterval(function(){
 			quitarMatch();
-		},200);
+		},300);
 	}
 
 }
@@ -166,11 +171,11 @@ function quitarMatch(){
 		coordenada = coordenada+$(".col-"+c).children().length;
 	}
 	if(buscarHor == 0 && buscarVer == 0 && coordenada != 49){
-		clearInterval(eliminar);
+		clearInterval(quitarDulces);
 		matchNuevosDulces = 0;
 		nuevosDulces = setInterval(function(){
 			rellenar()
-		},600);
+		},400);
 	}
 
 	if (buscarHor == 1 || buscarVer == 1) {
@@ -185,16 +190,20 @@ function quitarMatch(){
 	}
 	if(buscarHor == 0 && buscarVer == 0 && coordenada == 49){
 		$(".elemento").draggable({
+			cursorAt: {top: 56, left: 56},
 			disabled:false,
 			containment:".panel-tablero",
 			revert:true,
 			revertDuration:0,
 			snap:".elemento",
 			snapMode:"inner",
-			snapTolerance:40,
-			start : function(event,ui){
+			snapTolerance:10,
+			opacity: 0.6,
+			stack: ".elemento",
+			start:function(event,ui){
 				movimiento = movimiento + 1;
-				$("#movimientos-text").html(movimiento);}
+				$("#movimientos-text").html(movimiento);
+			}
 		});
 	}
 	$(".elemento").droppable({
@@ -206,20 +215,30 @@ function quitarMatch(){
 				espera = dropped.swap($(droppedOn));
 			}while(espera == 0);
 			buscarHor = matchHor();
+			buscarVer = matchVer();
 			if(buscarHor == 0 && buscarVer == 0){
 				dropped.swap($(droppedOn));
 			}
 			if(buscarHor == 1 || buscarVer == 1){
 				clearInterval(nuevosDulces);
-				clearInterval(eliminar);
-				eliminar = setInterval(function(){
+				clearInterval(quitarDulces);
+				quitarDulces = setInterval(function(){
 					quitarMatch()
-				},600);
+				},300);
 			}
 		}
 	});
-
 }
+
+jQuery.fn.swap = function(b){
+	b=jQuery(b)[0];
+	var a=this[0];
+	var t=a.parentNode.insertBefore(document.createTextNode(''),a);
+	b.parentNode.insertBefore(a,b);
+	t.parentNode.insertBefore(b,t);
+	t.parentNode.removeChild(t);
+	return this;
+};
 
 function rellenar(){
 	$(".elemento").draggable({disabled:true});
@@ -252,23 +271,15 @@ function rellenar(){
 	}
 	if(contadorTotal == 1){
 		clearInterval(nuevosDulces);
-		eliminar = setInterval(function(){
+		quitarDulces = setInterval(function(){
 			quitarMatch()
-		},150);
+		},300);
 	}
 	contadorTotal = contadorTotal-1;
 };
 
 
-jQuery.fn.swap = function(b){
-	b=jQuery(b)[0];
-	var a=this[0];
-	var t=a.parentNode.insertBefore(document.createTextNode(''),a);
-	b.parentNode.insertBefore(a,b);
-	t.parentNode.insertBefore(b,t);
-	t.parentNode.removeChild(t);
-	return this;
-};
+
 
 //Borrar tablero para reinicio
 function borrartotal(){
